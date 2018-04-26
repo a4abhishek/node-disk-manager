@@ -36,6 +36,8 @@ jobs:
             sudo mv minikube /usr/local/bin/
             # Install git
             sudo apt install -y git
+            # Install zip
+            sudo apt install -y zip
             # Install Go 1.9.3
             curl -o golang.tar.gz https://storage.googleapis.com/golang/go1.9.3.linux-amd64.tar.gz
             tar -C /usr/local -xzf golang.tar.gz
