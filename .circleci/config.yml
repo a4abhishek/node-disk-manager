@@ -1,25 +1,30 @@
 version: 2
 jobs:
   build:
-    machine: true
+    docker:
+      - image: ubuntu:16.04
+    # machine: true
     environment:
-      ARCH: $(go env GOARCH).
+      ARCH: $(go env GOARCH)
       NODE_DISK_MANAGER: ndm
       CHANGE_MINIKUBE_NONE_USER: true
-    working_directory: /home/circleci/.go_workspace/src/github.com/openebs/node-disk-manager
+    working_directory: /go/src/github.com/openebs/node-disk-manager
     steps:
       - checkout
       - run: pwd
-      - run: lsb_release -a
+      - run: cat /etc/os-release
+      # - run: lsb_release -a
       - run: ls -lrth
       - run: echo "$GOPATH"
-      - run: sudo apt-get update
+      - run: sudo apt update
+      - run: sudo apt install -y curl
       - run: curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.9.4/bin/darwin/amd64/kubectl
       - run: sudo chmod +x ./kubectl
       - run: sudo mv ./kubectl /usr/local/bin/kubectl
       - run: curl -Lo minikube https://storage.googleapis.com/minikube/releases/v0.26.0/minikube-linux-amd64
       - run: sudo chmod +x minikube
       - run: sudo mv minikube /usr/local/bin/
+      - run: sudo apt install -y build-essential
       - run: make bootstrap
       - run: make
       - run: make e2e
