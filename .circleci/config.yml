@@ -1,0 +1,47 @@
+# Golang CircleCI 2.0 configuration file
+#
+# Check https://circleci.com/docs/2.0/language-go/ for more details
+version: 2
+jobs:
+  build:
+    # machine: true
+    machine:
+      image: ubuntu:16.04
+    # docker:
+      # specify the version
+      # - image: circleci/golang:1.9
+
+      # Specify service dependencies here if necessary
+      # CircleCI maintains a library of pre-built images
+      # documented at https://circleci.com/docs/2.0/circleci-images/
+      # - image: circleci/postgres:9.4
+
+    #### TEMPLATE_NOTE: go expects specific checkout path representing url
+    #### expecting it in the form of
+    ####   /go/src/github.com/circleci/go-tool
+    ####   /go/src/bitbucket.org/circleci/go-tool
+    working_directory: $GOPATH/src/github.com/openebs/node-disk-manager
+    dependencies:
+      override:
+        - |
+          sudo apt-get update &&
+          curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.9.4/bin/darwin/amd64/kubect &&
+          sudo chmod +x ./kubectl &&
+          sudo mv ./kubectl /usr/local/bin/kubectl &&
+          curl -Lo minikube https://storage.googleapis.com/minikube/releases/v0.26.0/minikube-linux-amd64 &&
+          sudo chmod +x minikube &&
+          sudo mv minikube /usr/local/bin/ &&
+
+    steps:
+      - checkout
+      # - run: echo "$GOPATH"
+      # - run: make
+
+      # specify any bash command here prefixed with `run: `
+      # - run: go get -v -t -d ./...
+      # - run: go test -v ./...
+  test:
+    override:
+      - make
+      - make e2e
+
