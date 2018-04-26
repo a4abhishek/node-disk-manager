@@ -20,8 +20,9 @@ jobs:
       - run:
           name: Faking sudo
           command: |
-            function sudo { $@; }
-            export -f sudo
+            echo "function sudo { $@; }" >> $HOME/.bashrc
+            echo "export -f sudo" >> $HOME/.bashrc
+            source $HOME/.bashrc
       - run: sudo apt update
       - run: sudo apt install -y curl
       - run: curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.9.4/bin/darwin/amd64/kubectl
