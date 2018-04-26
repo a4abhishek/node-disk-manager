@@ -20,13 +20,12 @@ jobs:
       - run:
           name: Faking sudo
           command: |
-            echo 'function sudo { $@; }' >> $HOME/.bashrc
-            echo "export -f sudo" >> $HOME/.bashrc
-            source $HOME/.bashrc
-      - run:
-          name: .bashrc
-          command: cat $HOME/.bashrc
-      - run: sudo apt update
+            function sudo { $@; }
+            # export -f sudo
+            # - run:
+            # -   name: .bashrc
+            # -   command: cat $HOME/.bashrc
+            sudo apt update
       - run: sudo apt install -y curl
       - run: curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.9.4/bin/darwin/amd64/kubectl
       - run: sudo chmod +x ./kubectl
