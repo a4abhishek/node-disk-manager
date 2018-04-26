@@ -20,7 +20,7 @@ jobs:
       - run:
           name: Faking sudo
           command: |
-            echo "function sudo { $@; }" >> $HOME/.bashrc
+            echo 'function sudo { $@; }' >> $HOME/.bashrc
             echo "export -f sudo" >> $HOME/.bashrc
             source $HOME/.bashrc
       - run:
