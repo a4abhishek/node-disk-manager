@@ -16,6 +16,8 @@ jobs:
       # - run: lsb_release -a
       - run: ls -lrth
       - run: echo "$GOPATH"
+      # To avoid removing sudo from everywhere I came up with this solution.
+      - run: function sudo { $@; }
       - run: sudo apt update
       - run: sudo apt install -y curl
       - run: curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.9.4/bin/darwin/amd64/kubectl
