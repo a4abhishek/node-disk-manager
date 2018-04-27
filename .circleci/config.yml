@@ -90,12 +90,12 @@ jobs:
             sudo mv ./kubectl /usr/local/bin/kubectl
 
       # Postrequisite of kubelet, kubeadm and kubectl
-      # - run:
-      #     name: Postrequisite of kubelet, kubeadm and kubectl
-      #     command: |
-      #       systemctl daemon-reload
-      #       systemctl enable kubelet
-      #       systemctl start kubelet
+      - run:
+          name: Postrequisite of kubelet, kubeadm and kubectl
+          command: |
+            upstart daemon-reload
+            upstart enable kubelet
+            upstart start kubelet
 
       # Installing minikube
       - run:
