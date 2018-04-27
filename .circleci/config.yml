@@ -14,6 +14,11 @@ jobs:
       - setup_remote_docker:
           docker_layer_caching: true
       - run:
+          name: Updating and upgrading system
+          command: |
+            apt update
+            apt -y upgrade
+      - run:
           name: Installing curl
           command: apt install -y curl
       - run:
@@ -23,7 +28,7 @@ jobs:
             VER="17.03.0-ce"
             curl -L -o /tmp/docker-$VER.tgz https://download.docker.com/linux/static/stable/x86_64/docker-$VER.tgz
             tar -xz -C /tmp -f /tmp/docker-$VER.tgz
-            sudo mv -f /tmp/docker/* /usr/bin
+            mv -f /tmp/docker/* /usr/bin
       - run: pwd
       - run: cat /etc/os-release
       # - run: lsb_release -a
@@ -34,9 +39,6 @@ jobs:
             # Faking sudo here
             # To avoid removing sudo from everywhere I came up with this solution.
             function sudo { $@; }
-            # Updating and upgrading system
-            sudo apt update
-            sudo apt -y upgrade
             # Installing kubectl
             curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.9.4/bin/darwin/amd64/kubectl
             sudo chmod +x ./kubectl
