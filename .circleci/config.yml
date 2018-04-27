@@ -109,7 +109,7 @@ jobs:
 
       # Doing actual operations
       - run:
-          name: Installing Tools
+          name: Installing Other Tools
           command: make bootstrap
 
       # Building Project
