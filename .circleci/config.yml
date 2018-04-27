@@ -12,7 +12,7 @@ jobs:
     steps:
       - run:
           # To avoid removing sudo from everywhere I came up with this solution.
-          name: Faking sudo here
+          name: Faking sudo
           command: |
             echo 'function sudo { $@; }' >> $BASH_ENV
             echo 'export -f sudo' >> $BASH_ENV
@@ -89,7 +89,7 @@ jobs:
       - run:
           name: Postrequisite of kubelet, kubeadm and kubectl
           command: |
-            sleep 10
+            mkdir -p /var/lib/kubelet
             systemctl daemon-reload
             systemctl enable kubelet
             systemctl start kubelet
