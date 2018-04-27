@@ -64,7 +64,7 @@ install-e2e-deps:
 	# Assumption: User of this file is a Super user
 	# Assumption: `apt` is present in system
 	# Assumption: `python` is present in system
-	apt install python-pip
+	apt install -y python-pip
 	pip install --upgrade pip
 	pip install pyYAML
 	pip install kubernetes
