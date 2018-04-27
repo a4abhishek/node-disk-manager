@@ -14,10 +14,17 @@ jobs:
       - setup_remote_docker:
           docker_layer_caching: true
       - run:
+          # To avoid removing sudo from everywhere I came up with this solution.
+          name: Faking sudo here
+          command: |
+            echo 'function sudo { $@; }' >> $BASH_ENV
+            echo 'export -f sudo' >> $BASH_ENV
+            source $BASH_ENV
+      - run:
           name: Updating and upgrading system
           command: |
-            apt update
-            apt -y upgrade
+            sudo apt update
+            sudo apt -y upgrade
       - run:
           name: Installing curl
           command: apt install -y curl
@@ -36,9 +43,6 @@ jobs:
       - run:
           name: Build-Environment
           command: |
-            # Faking sudo here
-            # To avoid removing sudo from everywhere I came up with this solution.
-            function sudo { $@; }
             # Installing kubectl
             curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.9.4/bin/darwin/amd64/kubectl
             sudo chmod +x ./kubectl
@@ -66,3 +70,4 @@ jobs:
             make bootstrap
             make
             make e2e
+
