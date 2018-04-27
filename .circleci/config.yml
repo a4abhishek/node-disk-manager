@@ -37,10 +37,6 @@ jobs:
           command: apt install -y python2.7
 
       - run:
-          name: Checking if python is there
-          command: python --version
-
-      - run:
           name: Installing curl
           command: apt install -y curl
 
