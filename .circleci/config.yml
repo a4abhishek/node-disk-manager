@@ -146,6 +146,11 @@ jobs:
           name: Building Project
           command:  make
 
+      # Starting minikube
+      - run:
+          name: Starting minikube
+          command: minikube start --vm-driver=none --feature-gates=MountPropagation=true
+
       # Testing
       - run:
           name: Testing

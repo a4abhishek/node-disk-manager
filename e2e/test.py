@@ -404,8 +404,8 @@ if __name__ == '__main__':
         ndm_util.yaml_prepare()
 
         # Step: 3
-        print
-        start_minikube(max_try=5, wait_for_sec=1)
+        # print
+        # start_minikube(max_try=5, wait_for_sec=1)
 
         # Step: 3.5
         print
