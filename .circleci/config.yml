@@ -11,16 +11,12 @@ jobs:
     working_directory: /go/src/github.com/openebs/node-disk-manager
     steps:
       - run:
-          name: Installing sudo
-          command: apt-get install -y sudo
-
-      # - run:
-      #     # To avoid removing sudo from everywhere I came up with this solution.
-      #     name: Faking sudo here
-      #     command: |
-      #       echo 'function sudo { $@; }' >> $BASH_ENV
-      #       echo 'export -f sudo' >> $BASH_ENV
-      #       source $BASH_ENV
+          # To avoid removing sudo from everywhere I came up with this solution.
+          name: Faking sudo here
+          command: |
+            echo 'function sudo { $@; }' >> $BASH_ENV
+            echo 'export -f sudo' >> $BASH_ENV
+            source $BASH_ENV
 
       - checkout
 
@@ -55,8 +51,8 @@ jobs:
       # - run: lsb_release -a
 
       - run: ls -lrth
-      # Installing kubectl
 
+      # Installing kubectl
       - run:
           name: Installing kubectl
           command: |
@@ -120,5 +116,5 @@ jobs:
       # Testing
       - run:
           name: Testing
-          command:  make e2e
+          command:  make e2e function sudo { $@; }
 
