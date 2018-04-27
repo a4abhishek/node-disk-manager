@@ -15,8 +15,9 @@ jobs:
       # - run: lsb_release -a
       - run: ls -lrth
       - run: echo "$GOPATH"
+      - run: docker version
       - run: sudo apt update
-      - run: sudo apt install -y curl
+      - run: sudo apt upgrade
       - run: curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.9.4/bin/darwin/amd64/kubectl
       - run: sudo chmod +x ./kubectl
       - run: sudo mv ./kubectl /usr/local/bin/kubectl
