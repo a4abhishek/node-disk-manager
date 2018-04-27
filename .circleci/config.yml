@@ -33,6 +33,10 @@ jobs:
             apt -y upgrade
 
       - run:
+          name: Installing Python
+          command: apt install python2.7
+
+      - run:
           name: Checking if python is there
           command: python --version
 
