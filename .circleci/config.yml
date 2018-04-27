@@ -11,12 +11,16 @@ jobs:
     working_directory: /go/src/github.com/openebs/node-disk-manager
     steps:
       - run:
-          # To avoid removing sudo from everywhere I came up with this solution.
-          name: Faking sudo here
-          command: |
-            echo 'function sudo { $@; }' >> $BASH_ENV
-            echo 'export -f sudo' >> $BASH_ENV
-            source $BASH_ENV
+          name: Installing sudo
+          command: apt install -y sudo
+
+      # - run:
+      #     # To avoid removing sudo from everywhere I came up with this solution.
+      #     name: Faking sudo here
+      #     command: |
+      #       echo 'function sudo { $@; }' >> $BASH_ENV
+      #       echo 'export -f sudo' >> $BASH_ENV
+      #       source $BASH_ENV
 
       - checkout
 
@@ -24,10 +28,13 @@ jobs:
           docker_layer_caching: true
 
       - run:
-          name: Updating and upgrading system
+          name: Updating the system
+          command: apt update
+
+      - run:
+          name: Upgrading the system
           command: |
-            sudo apt update
-            sudo apt -y upgrade
+            apt -y upgrade
 
       - run:
           name: Installing curl
@@ -75,9 +82,9 @@ jobs:
           name: Installing zip
           command: sudo apt install -y zip
 
-      # Setup Go 1.9.3
+      # Setting-up Go 1.9.3
       - run:
-          name: Setup Go 1.9.3
+          name: Setting-up Go 1.9.3
           command: |
             curl -o golang.tar.gz https://storage.googleapis.com/golang/go1.9.3.linux-amd64.tar.gz
             tar -C /usr/local -xzf golang.tar.gz
@@ -87,9 +94,9 @@ jobs:
             echo 'export PATH="${GOROOT}/bin:${GOPATH}/bin:${PATH}"' >> $BASH_ENV
             source $BASH_ENV
 
-      # Save GOARCH in ARCH Environment variables
+      # Save GOARCH in ARCH Environment variable
       - run:
-          name: Save GOARCH in ARCH Environment variables
+          name: Save GOARCH in ARCH Environment variable
           command: |
             echo 'export ARCH=$(go env GOARCH)' >> $BASH_ENV
             source $BASH_ENV
