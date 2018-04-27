@@ -10,13 +10,13 @@ jobs:
       CHANGE_MINIKUBE_NONE_USER: true
     working_directory: /go/src/github.com/openebs/node-disk-manager
     steps:
-      - run:
-          # To avoid removing sudo from everywhere I came up with this solution.
-          name: Faking sudo
-          command: |
-            echo 'function sudo { $@; }' >> $BASH_ENV
-            echo 'export -f sudo' >> $BASH_ENV
-            source $BASH_ENV
+      # - run:
+      #     # To avoid removing sudo from everywhere I came up with this solution.
+      #     name: Faking sudo
+      #     command: |
+      #       echo 'function sudo { $@; }' >> $BASH_ENV
+      #       echo 'export -f sudo' >> $BASH_ENV
+      #       source $BASH_ENV
 
       - checkout
 
@@ -31,6 +31,10 @@ jobs:
           name: Upgrading the system
           command: |
             apt -y upgrade
+
+      - run:
+          name: Installing sudo
+          command: apt-get -y install sudo
 
       - run:
           name: Installing Python
