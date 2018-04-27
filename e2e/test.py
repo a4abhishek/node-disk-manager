@@ -370,8 +370,8 @@ def thread_task():
         j += 1
 
 if __name__ == '__main__':
-    thread = threading.Thread(target=thread_task)
-    thread.start()
+    # thread = threading.Thread(target=thread_task)
+    # thread.start()
 
     print 'CPU Count:'
     print psutil.cpu_count()
@@ -464,7 +464,7 @@ if __name__ == '__main__':
         print 'Cleaning...'
         clean()
         print 'Done Cleaning.'
-        print 'Waiting for thread to join...'
-        thread_run = False
-        thread.join()
-        print 'Done.'
+        # print 'Waiting for thread to join...'
+        # thread_run = False
+        # thread.join()
+        # print 'Done.'
