@@ -56,6 +56,27 @@ jobs:
 
       - run: ls -lrth
 
+      # Prequesites for kubelet, kubeadm and kubectl
+      - run:
+          name: Prequesites for kubelet, kubeadm and kubectl
+          command: |
+            apt install -y apt-transport-https
+            curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
+            cat <<EOF >/etc/apt/sources.list.d/kubernetes.list
+            deb http://apt.kubernetes.io/ kubernetes-xenial main
+            EOF
+            apt update
+
+      # Installing kubelet
+      - run:
+          name: Installing kubelet
+          command: apt install -y kubelet=1.10.0
+
+      # Installing kubeadm
+      - run:
+          name: Installing kubeadm
+          command: apt install -y kubeadm=1.10.0
+
       # Installing kubectl
       - run:
           name: Installing kubectl
@@ -63,6 +84,14 @@ jobs:
             curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.9.4/bin/darwin/amd64/kubectl
             sudo chmod +x ./kubectl
             sudo mv ./kubectl /usr/local/bin/kubectl
+
+      # Postrequisite of kubelet, kubeadm and kubectl
+      - run:
+          name: Postrequisite of kubelet, kubeadm and kubectl
+          command: |
+            systemctl daemon-reload
+            systemctl enable kubelet
+            systemctl start kubelet
 
       # Installing minikube
       - run:
