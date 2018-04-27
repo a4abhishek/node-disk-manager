@@ -10,6 +10,8 @@ jobs:
     working_directory: /go/src/github.com/openebs/node-disk-manager
     steps:
       - checkout
+      - setup_remote_docker:
+          docker_layer_caching: true
       - run: pwd
       - run: cat /etc/os-release
       # - run: lsb_release -a
