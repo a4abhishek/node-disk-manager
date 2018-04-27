@@ -70,12 +70,12 @@ jobs:
       # Installing kubelet
       - run:
           name: Installing kubelet
-          command: apt install -y kubelet=1.10.0
+          command: apt install -y kubelet=v1.10.0
 
       # Installing kubeadm
       - run:
           name: Installing kubeadm
-          command: apt install -y kubeadm=1.10.0
+          command: apt install -y kubeadm=v1.10.0
 
       # Installing kubectl
       - run:
