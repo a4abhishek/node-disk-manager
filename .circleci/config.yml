@@ -89,6 +89,7 @@ jobs:
       - run:
           name: Postrequisite of kubelet, kubeadm and kubectl
           command: |
+            sleep 10
             systemctl daemon-reload
             systemctl enable kubelet
             systemctl start kubelet
