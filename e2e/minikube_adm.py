@@ -18,7 +18,7 @@ def setup():
     # Assumption: This function's caller should be a Super user.
     try:
         print 'Running minikube command'###########
-        subprocess.check_call(["sudo", "minikube", "start", "--vm-driver=none",
+        subprocess.check_call(["minikube", "start", "--vm-driver=none",
                                "--feature-gates=MountPropagation=true"])
         # subprocess.check_call(["sudo", "minikube", "start", "--vm-driver=none",
         #                        "--feature-gates=MountPropagation=true",
@@ -41,12 +41,12 @@ def setup():
     # Run the commands required when run minikube as --vm-driver=none
     # Assumption: Environment variables `USER` and `HOME` is well defined.
     commands = [
-        "sudo mv /root/.kube " + os_environ["HOME"] + "/.kube",
-        "sudo chown -R " + os_environ["USER"] + " " + os_environ["HOME"] + "/.kube",
-        "sudo chgrp -R " + os_environ["USER"] + " " + os_environ["HOME"] + "/.kube",
-        "sudo mv /root/.minikube " + os_environ["HOME"] + "/.minikube",
-        "sudo chown -R " + os_environ["USER"] + " " + os_environ["HOME"] + "/.minikube",
-        "sudo chgrp -R " + os_environ["USER"] + " " + os_environ["HOME"] + "/.minikube"
+        "mv /root/.kube " + os_environ["HOME"] + "/.kube",
+        "chown -R " + os_environ["USER"] + " " + os_environ["HOME"] + "/.kube",
+        "chgrp -R " + os_environ["USER"] + " " + os_environ["HOME"] + "/.kube",
+        "mv /root/.minikube " + os_environ["HOME"] + "/.minikube",
+        "chown -R " + os_environ["USER"] + " " + os_environ["HOME"] + "/.minikube",
+        "chgrp -R " + os_environ["USER"] + " " + os_environ["HOME"] + "/.minikube"
     ]
 
     # Wait for `.kube` to be created
@@ -86,7 +86,7 @@ def check_status():
     # Caller of this function should have proper rights
     # to check minikube status
     try:
-        status_str = subprocess.check_output(["sudo", "minikube", "status"]).strip()
+        status_str = subprocess.check_output(["minikube", "status"]).strip()
     except subprocess.CalledProcessError as err:
         print 'Subprocess error occured while checking minikube status:',\
             err.returncode
@@ -105,7 +105,7 @@ def teardown():
     """This method deletes minikube."""
     # Caller of this function should have proper rights to delete minikube
     try:
-        subprocess.check_output(["sudo", "minikube", "delete"])
+        subprocess.check_output(["minikube", "delete"])
     except subprocess.CalledProcessError as err:
         print 'Subprocess error occured while deleting minikube:',\
             err.returncode
@@ -118,12 +118,12 @@ def clear_containers():
     """This method removes all the docker containers present on the machine."""
     # CAUTION: This function call deletes all docker containers
     try:
-        containers = subprocess.check_output(["sudo", "docker", "ps", "-aq"])
+        containers = subprocess.check_output(["docker", "ps", "-aq"])
         if containers != '':
             containers = containers.split()
             for container in containers:
                 try:
-                    subprocess.check_call(["sudo", "docker", "rm", "-f", container])
+                    subprocess.check_call(["docker", "rm", "-f", container])
                 except subprocess.CalledProcessError as err:
                     print 'Subprocess error occured',\
                         'while deleting docker containers:', err.returncode

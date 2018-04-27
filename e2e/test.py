@@ -364,7 +364,7 @@ def thread_task():
         i += 1
         if j>=400: # After 8 minutes
             print '######################## Minikube Log ########################'
-            os_exec('sudo minikube logs')
+            os_exec('minikube logs')
             print '##############################################################'
             j=0
         j += 1

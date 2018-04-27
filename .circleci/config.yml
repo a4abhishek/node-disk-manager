@@ -116,5 +116,5 @@ jobs:
       # Testing
       - run:
           name: Testing
-          command:  make e2e sudo
+          command:  make e2e
 
