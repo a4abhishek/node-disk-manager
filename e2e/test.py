@@ -289,7 +289,7 @@ def validate_ndm_output():
         ndm_in_pod = k8s_util.exec_to_pod(['ndm', 'device', 'list'], ndm_pod)
 
         try:
-            print "os_environ['XC_ARCH'] =", os_environ['XC_ARCH']
+            print "os_environ['XC_ARCH'] =", os_environ['XC_ARCH'] ####### use os_environ.get instead
             print path_join(NDM_BIN, os_environ.get('XC_ARCH', 'amd64'), 'ndm')
             ndm_in_host = subprocess.check_output([path_join(NDM_BIN, os_environ['XC_ARCH'], 'ndm'),
                                                    'device', 'list'])
