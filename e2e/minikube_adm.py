@@ -6,6 +6,8 @@ from os import environ as os_environ
 from os.path import isdir
 from os.path import join as path_join
 from os import environ as os_environ
+from os import system as os_exec
+from os import remove as file_remove
 from time import sleep
 import subprocess
 
@@ -83,15 +85,24 @@ def check_status():
     """
     # Caller of this function should have proper rights
     # to check minikube status
+    command = "sudo minikube status"
     try:
-        status_str = subprocess.check_output(["sudo", "minikube", "status"]).strip()
-    except subprocess.CalledProcessError as err:
-        print 'Subprocess error occured while checking minikube status:',\
-            err.returncode
-        raise err
+        try:
+            status_str = subprocess.check_output(command.split()).strip()
+        except subprocess.CalledProcessError as err:
+            print 'Subprocess error occured while checking minikube status:',\
+                err.returncode
+            raise err
+        except Exception as err:
+            print 'Unknown error occured while checking minikube status.'
+            raise err
     except Exception as err:
-        print 'Unknown error occured while checking minikube status.'
-        raise err
+        # A dirty code here
+        tmp_file = '/tmp/minikube_status'
+        os_exec(command + " > " + tmp_file)
+        with open(tmp_file) as fp:
+            status_str = fp.read().strip()
+        file_remove(tmp_file)
 
     status = {}
     for line in status_str.split('\n'):
