@@ -76,7 +76,7 @@ install-e2e-deps:
 	sudo pip install psutil
 
 e2e: install-e2e-deps
-	python e2e/test.py
+	sudo python e2e/test.py
 
 ndm:
 	@echo '--> Building binary...'
