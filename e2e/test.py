@@ -349,29 +349,7 @@ def clean():
     else:
         print 'Not present.'
 
-thread_run = True
-
-def thread_task():
-    global thread_run
-    i = 0
-    j = 0
-    # Using `i` so that condition getting checked every second.
-    while thread_run:
-        sleep(1)
-        if i >= 5:
-            print '############ Travis Awake ############'
-            i = 0
-        i += 1
-        if j>=400: # After 8 minutes
-            print '######################## Minikube Log ########################'
-            os_exec('sudo minikube logs')
-            print '##############################################################'
-            j=0
-        j += 1
-
 if __name__ == '__main__':
-    thread = threading.Thread(target=thread_task)
-    thread.start()
 
     print 'CPU Count:'
     print psutil.cpu_count()
@@ -405,7 +383,7 @@ if __name__ == '__main__':
 
         # Step: 3
         print
-        start_minikube(max_try=5, wait_for_sec=1)
+        start_minikube(max_try=10, wait_for_sec=1)
 
         # Step: 3.5
         print
@@ -464,7 +442,3 @@ if __name__ == '__main__':
         print 'Cleaning...'
         clean()
         print 'Done Cleaning.'
-        print 'Waiting for thread to join...'
-        thread_run = False
-        thread.join()
-        print 'Done.'
