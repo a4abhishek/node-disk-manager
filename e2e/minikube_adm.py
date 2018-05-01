@@ -22,7 +22,10 @@ def setup():
         print 'Running minikube command'###########
         subprocess.check_call(["sudo", "minikube", "start", "--vm-driver=none",
                                "--feature-gates=MountPropagation=true",
-                               "--cpus=1", "--memory=1024", "--v=3", "--alsologtostderr"])
+                               "--cpus=1", "--memory=1024"])
+        # subprocess.check_call(["sudo", "minikube", "start", "--vm-driver=none",
+        #                        "--feature-gates=MountPropagation=true",
+        #                        "--cpus=1", "--memory=1024", "--v=3", "--alsologtostderr"])
         print 'Run minikube command'###########
     except subprocess.CalledProcessError as err:
         print 'Subprocess error occured while starting minikube:',\
@@ -32,7 +35,7 @@ def setup():
         print 'Unknown error occured while starting minikube.'
         raise err
 
-    print "os_environ['CHANGE_MINIKUBE_NONE_USER'] =", os_environ['CHANGE_MINIKUBE_NONE_USER']
+    print "os_environ['CHANGE_MINIKUBE_NONE_USER'] =", os_environ['CHANGE_MINIKUBE_NONE_USER'] # Use .get method instead
     if os_environ.get('CHANGE_MINIKUBE_NONE_USER') == 'true':
         # Below commands shall automatically run in this case.
         print 'Returning from setup.'

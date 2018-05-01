@@ -291,7 +291,7 @@ def validate_ndm_output():
         try:
             print "os_environ['XC_ARCH'] =", os_environ['XC_ARCH'] ####### use os_environ.get instead
             print path_join(NDM_BIN, os_environ.get('XC_ARCH', 'amd64'), 'ndm')
-            ndm_in_host = subprocess.check_output([path_join(NDM_BIN, os_environ['XC_ARCH'], 'ndm'),
+            ndm_in_host = subprocess.check_output([path_join(NDM_BIN, os_environ['ARCH'], 'ndm'),
                                                    'device', 'list'])
 
             print 'In Pod:', ndm_in_pod
