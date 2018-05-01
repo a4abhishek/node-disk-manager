@@ -75,8 +75,7 @@ install-e2e-deps:
 	# sudo pip install --upgrade pyopenssl
 	sudo pip install psutil
 
-# e2e: install-e2e-deps
-e2e:
+e2e: install-e2e-deps
 	python e2e/test.py
 
 ndm:
