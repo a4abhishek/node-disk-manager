@@ -61,25 +61,25 @@ jobs:
       - run: ls -lrth
 
       # Prequesites for kubelet, kubeadm and kubectl
-      - run:
-          name: Prequesites for kubelet, kubeadm and kubectl
-          command: |
-            apt install -y apt-transport-https
-            curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
-            cat <<EOF >/etc/apt/sources.list.d/kubernetes.list
-            deb http://apt.kubernetes.io/ kubernetes-xenial main
-            EOF
-            apt update
+      # - run:
+      #     name: Prequesites for kubelet, kubeadm and kubectl
+      #     command: |
+      #       apt install -y apt-transport-https
+      #       curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
+      #       cat <<EOF >/etc/apt/sources.list.d/kubernetes.list
+      #       deb http://apt.kubernetes.io/ kubernetes-xenial main
+      #       EOF
+      #       apt update
 
       # Installing kubelet
-      - run:
-          name: Installing kubelet
-          command: apt install -y kubelet=1.10.0-00
+      # - run:
+      #     name: Installing kubelet
+      #     command: apt install -y kubelet=1.10.0-00
 
       # Installing kubeadm
-      - run:
-          name: Installing kubeadm
-          command: apt install -y kubeadm=1.10.0-00
+      # - run:
+      #     name: Installing kubeadm
+      #     command: apt install -y kubeadm=1.10.0-00
 
       # Installing kubectl
       - run:
@@ -90,12 +90,12 @@ jobs:
             sudo mv ./kubectl /usr/local/bin/kubectl
 
       # Postrequisite of kubelet, kubeadm and kubectl
-      - run:
-          name: Postrequisite of kubelet, kubeadm and kubectl
-          command: |
-            upstart daemon-reload
-            upstart enable kubelet
-            upstart start kubelet
+      # - run:
+      #     name: Postrequisite of kubelet, kubeadm and kubectl
+      #     command: |
+      #       upstart daemon-reload
+      #       upstart enable kubelet
+      #       upstart start kubelet
 
       # Installing minikube
       - run:
@@ -104,6 +104,8 @@ jobs:
             curl -Lo minikube https://storage.googleapis.com/minikube/releases/v0.26.0/minikube-linux-amd64
             sudo chmod +x minikube
             sudo mv minikube /usr/local/bin/
+            echo 'export CHANGE_MINIKUBE_NONE_USER=true' >> $BASH_ENV
+            source $BASH_ENV
 
       # Installing git
       - run:
