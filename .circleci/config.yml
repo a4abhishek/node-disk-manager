@@ -158,6 +158,7 @@ jobs:
           command: |
             minikube start --vm-driver=none --bootstrapper=localkube --feature-gates=MountPropagation=true
             minikube update-context
+            minikube status
             kubectl get pods --all-namespaces
 
       # All Pods
