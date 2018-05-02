@@ -6,6 +6,8 @@ from os import environ as os_environ
 from os.path import isdir
 from os.path import join as path_join
 from os import environ as os_environ
+from os import system as os_exec
+from os import remove as file_remove
 from time import sleep
 import subprocess
 
@@ -18,7 +20,7 @@ def setup():
     # Assumption: This function's caller should be a Super user.
     try:
         print 'Running minikube command'###########
-        subprocess.check_call(["minikube", "start", "--vm-driver=none",
+        subprocess.check_call(["sudo", "minikube", "start", "--vm-driver=none",
                                "--bootstrapper=localkube", "--feature-gates=MountPropagation=true"])
         # subprocess.check_call(["sudo", "minikube", "start", "--vm-driver=none",
         #                        "--feature-gates=MountPropagation=true",
@@ -32,7 +34,7 @@ def setup():
         print 'Unknown error occured while starting minikube.'
         raise err
 
-    print "os_environ['CHANGE_MINIKUBE_NONE_USER'] =", os_environ['CHANGE_MINIKUBE_NONE_USER']
+    print "os_environ['CHANGE_MINIKUBE_NONE_USER'] =", os_environ['CHANGE_MINIKUBE_NONE_USER'] # Use .get method instead
     if os_environ.get('CHANGE_MINIKUBE_NONE_USER') == 'true':
         # Below commands shall automatically run in this case.
         print 'Returning from setup.'
@@ -41,12 +43,12 @@ def setup():
     # Run the commands required when run minikube as --vm-driver=none
     # Assumption: Environment variables `USER` and `HOME` is well defined.
     commands = [
-        "mv /root/.kube " + os_environ["HOME"] + "/.kube",
-        "chown -R " + os_environ["USER"] + " " + os_environ["HOME"] + "/.kube",
-        "chgrp -R " + os_environ["USER"] + " " + os_environ["HOME"] + "/.kube",
-        "mv /root/.minikube " + os_environ["HOME"] + "/.minikube",
-        "chown -R " + os_environ["USER"] + " " + os_environ["HOME"] + "/.minikube",
-        "chgrp -R " + os_environ["USER"] + " " + os_environ["HOME"] + "/.minikube"
+        "sudo mv /root/.kube " + os_environ["HOME"] + "/.kube",
+        "sudo chown -R " + os_environ["USER"] + " " + os_environ["HOME"] + "/.kube",
+        "sudo chgrp -R " + os_environ["USER"] + " " + os_environ["HOME"] + "/.kube",
+        "sudo mv /root/.minikube " + os_environ["HOME"] + "/.minikube",
+        "sudo chown -R " + os_environ["USER"] + " " + os_environ["HOME"] + "/.minikube",
+        "sudo chgrp -R " + os_environ["USER"] + " " + os_environ["HOME"] + "/.minikube"
     ]
 
     # Wait for `.kube` to be created
@@ -85,15 +87,24 @@ def check_status():
     """
     # Caller of this function should have proper rights
     # to check minikube status
+    command = "sudo minikube status"
     try:
-        status_str = subprocess.check_output(["minikube", "status"]).strip()
-    except subprocess.CalledProcessError as err:
-        print 'Subprocess error occured while checking minikube status:',\
-            err.returncode
-        raise err
+        try:
+            status_str = subprocess.check_output(command.split()).strip()
+        except subprocess.CalledProcessError as err:
+            print 'Subprocess error occured while checking minikube status:',\
+                err.returncode
+            raise err
+        except Exception as err:
+            print 'Unknown error occured while checking minikube status.'
+            raise err
     except Exception as err:
-        print 'Unknown error occured while checking minikube status.'
-        raise err
+        # A dirty code here
+        tmp_file = '/tmp/minikube_status'
+        os_exec(command + " > " + tmp_file)
+        with open(tmp_file) as fp:
+            status_str = fp.read().strip()
+        file_remove(tmp_file)
 
     status = {}
     for line in status_str.split('\n'):
@@ -105,7 +116,7 @@ def teardown():
     """This method deletes minikube."""
     # Caller of this function should have proper rights to delete minikube
     try:
-        subprocess.check_output(["minikube", "delete"])
+        subprocess.check_output(["sudo", "minikube", "delete"])
     except subprocess.CalledProcessError as err:
         print 'Subprocess error occured while deleting minikube:',\
             err.returncode
@@ -118,12 +129,12 @@ def clear_containers():
     """This method removes all the docker containers present on the machine."""
     # CAUTION: This function call deletes all docker containers
     try:
-        containers = subprocess.check_output(["docker", "ps", "-aq"])
+        containers = subprocess.check_output(["sudo", "docker", "ps", "-aq"])
         if containers != '':
             containers = containers.split()
             for container in containers:
                 try:
-                    subprocess.check_call(["docker", "rm", "-f", container])
+                    subprocess.check_call(["sudo", "docker", "rm", "-f", container])
                 except subprocess.CalledProcessError as err:
                     print 'Subprocess error occured',\
                         'while deleting docker containers:', err.returncode

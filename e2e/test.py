@@ -289,9 +289,9 @@ def validate_ndm_output():
         ndm_in_pod = k8s_util.exec_to_pod(['ndm', 'device', 'list'], ndm_pod)
 
         try:
-            print "os_environ['XC_ARCH'] =", os_environ['XC_ARCH']
+            print "os_environ['XC_ARCH'] =", os_environ['XC_ARCH'] ####### use os_environ.get instead
             print path_join(NDM_BIN, os_environ.get('XC_ARCH', 'amd64'), 'ndm')
-            ndm_in_host = subprocess.check_output([path_join(NDM_BIN, os_environ['XC_ARCH'], 'ndm'),
+            ndm_in_host = subprocess.check_output([path_join(NDM_BIN, os_environ['ARCH'], 'ndm'),
                                                    'device', 'list'])
 
             print 'In Pod:', ndm_in_pod
@@ -349,29 +349,12 @@ def clean():
     else:
         print 'Not present.'
 
-thread_run = True
 
-def thread_task():
-    global thread_run
-    i = 0
-    j = 0
-    # Using `i` so that condition getting checked every second.
-    while thread_run:
-        sleep(1)
-        if i >= 5:
-            print '############ Travis Awake ############'
-            i = 0
-        i += 1
-        if j>=400: # After 8 minutes
-            print '######################## Minikube Log ########################'
-            os_exec('minikube logs')
-            print '##############################################################'
-            j=0
-        j += 1
-
-if __name__ == '__main__':
-    # thread = threading.Thread(target=thread_task)
-    # thread.start()
+def environment_info():
+    """
+    This method will print the information about the environment
+    where the testing is to be performed.
+    """
 
     print 'CPU Count:'
     print psutil.cpu_count()
@@ -382,6 +365,40 @@ if __name__ == '__main__':
     print 'Memory:'
     print psutil.virtual_memory()
 
+    # docker version
+    try:
+        docker_version = subprocess.check_output(['docker', 'version'])
+
+        print 'Doker version:'
+        print docker_version
+
+    except Exception as err:
+        print 'Error executing `docker version`. Error:', str(err)
+
+def setup():
+    """
+    This method prepare the environment to perform integration testing.
+    """
+
+    # Step: 1 (Commenting it out for now)
+    # print 'Making Project...'
+    # print
+    # make()
+
+    # Step: 2
+    print
+    print 'Preparing', NDM_TEST_YAML_NAME, '...'
+    ndm_util.yaml_prepare()
+
+    # Step: 3
+    print
+    start_minikube(max_try=5, wait_for_sec=1)
+
+    # Step: 3.5
+    print
+    print "Waiting until Namespace '" + NDM_NS + "' is up..."
+    wait_till_default_ns_is_ready()
+
     # Remove me
     try:
         docker_version = subprocess.check_output(['docker', 'version'])
@@ -391,80 +408,71 @@ if __name__ == '__main__':
 
     except Exception as err:
         print 'Error executing `docker version`. Error:', str(err)
-    ############
+
     try:
-        # Step: 1 (Commenting it out for now)
-        # print 'Making Project...'
-        # print
-        # make()
+        docker_images = subprocess.check_output(['docker', 'images'])
 
-        # Step: 2
-        print
-        print 'Preparing', NDM_TEST_YAML_NAME, '...'
-        ndm_util.yaml_prepare()
+        print 'Doker images:'
+        print docker_images
 
-        # Step: 3
-        # print
-        # start_minikube(max_try=5, wait_for_sec=1)
+    except Exception as err:
+        print 'Error executing `docker images`. Error:', str(err)
+    ############
 
-        # Step: 3.5
-        print
-        print "Waiting until Namespace '" + NDM_NS + "' is up..."
-        wait_till_default_ns_is_ready()
+    # Step: 4
+    print
+    print 'Applying the prepared YAML...'
+    print
+    apply_ndm_yaml(max_try=5, wait_for_sec=1)
 
-        # Remove me
-        try:
-            docker_version = subprocess.check_output(['docker', 'version'])
+    # Step: 4.5
+    print
+    print 'Checking if NDM Pod is up...'
+    wait_till_ndm_is_up(max_try=120, wait_for_sec=1)
 
-            print 'Doker version:'
-            print docker_version
+def integration_test():
+    """
+    This method integrates all the tests.
+    """
 
-        except Exception as err:
-            print 'Error executing `docker version`. Error:', str(err)
+    # Step: 5
+    validate_log()
 
-        try:
-            docker_images = subprocess.check_output(['docker', 'images'])
+    # Step: 6-1
+    print
+    print 'Validating lsblk output...'
+    validate_lsblk_output()
 
-            print 'Doker images:'
-            print docker_images
+    # Step: 6-2
+    print
+    print 'Validating ndm output...'
+    validate_ndm_output()
 
-        except Exception as err:
-            print 'Error executing `docker images`. Error:', str(err)
-        ############
+def teardown():
+    """
+    This method is responsible to perform all post test tasks; e.g. cleaning etc.
+    """
 
-        # Step: 4
-        print
-        print 'Applying the prepared YAML...'
-        print
-        apply_ndm_yaml(max_try=5, wait_for_sec=1)
+    print 'Cleaning...'
+    clean()
+    print 'Done Cleaning.'
 
-        # Step: 4.5
-        print
-        print 'Checking if NDM Pod is up...'
-        wait_till_ndm_is_up(max_try=120, wait_for_sec=1)
 
-        # Step: 5
-        validate_log()
+if __name__ == '__main__':
 
-        # Step: 6-1
-        print
-        print 'Validating lsblk output...'
-        validate_lsblk_output()
+    try:
+        print 'test environment details'.title().center(80, '#')
+        environment_info()
 
-        # Step: 6-2
-        print
-        print 'Validating ndm output...'
-        validate_ndm_output()
+        print 'test environment setup'.title().center(80, '#')
+        setup()
+
+        print 'performing integration test'.title().center(80, '#')
+        integration_test()
 
         print 'Success.'
     except Exception as err:
         raise err
     finally:
-        print
-        print 'Cleaning...'
-        clean()
-        print 'Done Cleaning.'
-        # print 'Waiting for thread to join...'
-        # thread_run = False
-        # thread.join()
-        # print 'Done.'
+        print 'teardown the environment'.title().center(80, '#')
+        teardown()
