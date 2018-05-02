@@ -75,22 +75,26 @@ def get_ndm_pod():
     # when pod is not even in ContainerCreating state
     i = 0
     ndm_pod = None
-    while ndm_pod is None and i < 5:
-        sleep(1)
+    while ndm_pod is None and i < 10:
+        sleep(2)
 
         # List pods
         # Assumption: NDM pod runs under 'dafault' namespace.
         pods = api_client.list_namespaced_pod('default')
 
         # Find NDM Pod
+        print '*'*80
+        print 'Current pods are:'
         for pod in pods.items:
             #Assumption: Pod name starts with string 'node-disk-manager'.
+            print pod.metadata.name
             if pod.metadata.name.startswith('node-disk-manager'):
                 ndm_pod = pod
                 break
+        print '*'*80
         i += 1
     if ndm_pod is None:
-        print 'Failed getting NDM-Pod.'
+        print 'Failed getting NDM-Pod in given time.'
         exit(1)
 
     return ndm_pod

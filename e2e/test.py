@@ -401,15 +401,6 @@ def setup():
 
     # Remove me
     try:
-        docker_version = subprocess.check_output(['docker', 'version'])
-
-        print 'Doker version:'
-        print docker_version
-
-    except Exception as err:
-        print 'Error executing `docker version`. Error:', str(err)
-
-    try:
         docker_images = subprocess.check_output(['docker', 'images'])
 
         print 'Doker images:'
