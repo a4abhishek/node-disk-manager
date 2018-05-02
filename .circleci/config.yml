@@ -153,7 +153,7 @@ jobs:
       # Starting minikube
       - run:
           name: Starting minikube
-          command: minikube start --vm-driver=none --feature-gates=MountPropagation=true
+          command: minikube start --vm-driver=none --bootstrapper=localkube --feature-gates=MountPropagation=true
 
       # Testing
       - run:
