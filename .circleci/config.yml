@@ -85,7 +85,7 @@ jobs:
       - run:
           name: Installing kubectl
           command: |
-            curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.9.4/bin/darwin/amd64/kubectl
+            curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.9.3/bin/linux/amd64/kubectl
             sudo chmod +x ./kubectl
             sudo mv ./kubectl /usr/local/bin/kubectl
 
@@ -101,7 +101,7 @@ jobs:
       - run:
           name: Installing minikube
           command: |
-            curl -Lo minikube https://storage.googleapis.com/minikube/releases/v0.26.0/minikube-linux-amd64
+            curl -Lo minikube https://storage.googleapis.com/minikube/releases/v0.25.0/minikube-linux-amd64
             sudo chmod +x minikube
             sudo mv minikube /usr/local/bin/
             echo 'export CHANGE_MINIKUBE_NONE_USER=true' >> $BASH_ENV
