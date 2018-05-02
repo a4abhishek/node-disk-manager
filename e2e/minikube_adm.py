@@ -22,11 +22,9 @@ def setup():
         print 'Running minikube command'###########
         subprocess.check_call(["minikube", "start", "--vm-driver=none",
                                "--bootstrapper=localkube", "--feature-gates=MountPropagation=true"])
-                               # "sudo",
         # subprocess.check_call(["minikube", "start", "--vm-driver=none",
         #                        "--feature-gates=MountPropagation=true",
         #                        "--cpus=1", "--memory=1024", "--v=3", "--alsologtostderr"])
-                                # "sudo",
         print 'Run minikube command'###########
     except subprocess.CalledProcessError as err:
         print 'Subprocess error occured while starting minikube:',\
@@ -52,7 +50,6 @@ def setup():
         "chown -R " + os_environ["USER"] + " " + os_environ["HOME"] + "/.minikube",
         "chgrp -R " + os_environ["USER"] + " " + os_environ["HOME"] + "/.minikube"
     ]
-    # sudo on every command
 
     # Wait for `.kube` to be created
     print 'Waiting for `.kube` to be created...'
@@ -90,7 +87,7 @@ def check_status():
     """
     # Caller of this function should have proper rights
     # to check minikube status
-    command = "minikube status" # sudo
+    command = "minikube status"
     try:
         try:
             status_str = subprocess.check_output(command.split()).strip()
@@ -119,7 +116,7 @@ def teardown():
     """This method deletes minikube."""
     # Caller of this function should have proper rights to delete minikube
     try:
-        subprocess.check_output(["minikube", "delete"]) # "sudo",
+        subprocess.check_output(["minikube", "delete"])
     except subprocess.CalledProcessError as err:
         print 'Subprocess error occured while deleting minikube:',\
             err.returncode
@@ -132,12 +129,12 @@ def clear_containers():
     """This method removes all the docker containers present on the machine."""
     # CAUTION: This function call deletes all docker containers
     try:
-        containers = subprocess.check_output(["docker", "ps", "-aq"]) # "sudo",
+        containers = subprocess.check_output(["docker", "ps", "-aq"])
         if containers != '':
             containers = containers.split()
             for container in containers:
                 try:
-                    subprocess.check_call(["docker", "rm", "-f", container]) # "sudo",
+                    subprocess.check_call(["docker", "rm", "-f", container])
                 except subprocess.CalledProcessError as err:
                     print 'Subprocess error occured',\
                         'while deleting docker containers:', err.returncode
