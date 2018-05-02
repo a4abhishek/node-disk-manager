@@ -158,9 +158,9 @@ jobs:
           command: minikube start --vm-driver=none --bootstrapper=localkube --feature-gates=MountPropagation=true
 
       # All Pods
-      - run:
-          name: All Pods
-          command: kubectl get pods --all-namespaces
+      # - run:
+      #     name: All Pods
+      #     command: kubectl get pods --all-namespaces
 
       # Testing
       - run:
