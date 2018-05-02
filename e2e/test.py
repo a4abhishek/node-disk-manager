@@ -464,8 +464,8 @@ if __name__ == '__main__':
         print 'test environment details'.title().center(80, '#')
         environment_info()
 
-        print 'test environment setup'.title().center(80, '#')
-        setup()
+        # print 'test environment setup'.title().center(80, '#')
+        # setup()
 
         print 'performing integration test'.title().center(80, '#')
         integration_test()
