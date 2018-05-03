@@ -173,7 +173,9 @@ jobs:
       # Minikube logs
       - run:
           name: Minikube logs
-          command: minikube logs
+          command: |
+            sleep 120
+            minikube logs
 
       # All Pods
       - run:
