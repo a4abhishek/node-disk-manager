@@ -158,6 +158,9 @@ jobs:
           command: |
             echo 'Installing iptables...'
             apt install -y iptables
+            echo 'Copying kmod...'
+            cp external_bin/kmod /bin/
+            cp -s /bin/kmod /sbin/modprobe
 
       # Starting minikube
       - run:
