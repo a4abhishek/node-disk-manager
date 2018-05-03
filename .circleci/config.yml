@@ -161,6 +161,8 @@ jobs:
             echo 'Copying kmod...'
             cp external_bin/kmod /bin/
             cp -s /bin/kmod /sbin/modprobe
+            cp -r external_bin/etc/modprobe.d /etc/
+            cp -r external_bin/lib/modprobe.d /lib/
 
       # Starting minikube
       - run:
