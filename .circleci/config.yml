@@ -168,7 +168,7 @@ jobs:
             minikube status
             kubectl config view
             kubectl config use-context minikube
-            kubectl --kubeconfig=$HOME/.kube/config get pods --all-namespaces
+            # kubectl --kubeconfig=$HOME/.kube/config get pods --all-namespaces
 
       # Minikube logs
       - run:
