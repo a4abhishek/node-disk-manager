@@ -173,6 +173,8 @@ jobs:
       - run:
           name: Starting minikube
           command: |
+            echo $KUBECONFIG
+            unset KUBECONFIG
             minikube start --vm-driver=none --bootstrapper=localkube --feature-gates=MountPropagation=true
             minikube update-context
             minikube status
