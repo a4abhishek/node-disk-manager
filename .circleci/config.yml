@@ -53,6 +53,11 @@ jobs:
             tar -xz -C /tmp -f /tmp/docker-$VER.tgz
             mv -f /tmp/docker/* /usr/bin
 
+      - run:
+          name: Docker version
+          command: |
+            docker version
+
       - run: pwd
 
       - run: cat /etc/os-release
