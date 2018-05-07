@@ -66,13 +66,22 @@ install-e2e-deps:
 	# Assumption: `python` is present in system
 	sudo apt install python-pip
 	sudo pip install --upgrade pip
-	sudo pip install pyYAML
-	sudo pip install kubernetes
 	# SNIMissingWarning resolution
+	sudo apt install python-dev
+	sudo apt install libffi-dev
+	sudo apt install libssl-dev
+	pip install 'requests[security]'
+	# sudo pip install python-markdown
+	# sudo pip install --upgrade python-markdown
 	# sudo pip install ndg-httpsclient
 	# sudo pip install --upgrade ndg-httpsclient
 	# sudo pip install pyopenssl
 	# sudo pip install --upgrade pyopenssl
+	# sudo pip install pyasn1
+	# sudo pip install --upgrade pyasn1
+	###
+	sudo pip install pyYAML
+	sudo pip install kubernetes
 	sudo pip install psutil
 
 e2e: install-e2e-deps

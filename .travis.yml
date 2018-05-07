@@ -14,7 +14,7 @@ env:
    # - TRAVIS_WORKER_DOCKER_CPUS=4
    # - TRAVIS_WORKER_DOCKER_MEMORY="12G"
 
-dist: xenial
+# dist: xenial
 sudo: required
 
 services:
@@ -35,11 +35,12 @@ install:
   - curl -Lo minikube https://storage.googleapis.com/minikube/releases/v0.26.0/minikube-linux-amd64
   - sudo chmod +x minikube
   - sudo mv minikube /usr/local/bin/
+  - sudo apt install util-linux
 
 script:
   - make
-#  - make test
-#  - sudo minikube start --vm-driver=none --bootstrapper=localkube --kubernetes-version=v1.9.4 --feature-gates=MountPropagation=true --cpus=1 --memory=4096
+#   - make test
+#   - sudo minikube start --vm-driver=none --bootstrapper=localkube --kubernetes-version=v1.9.4 --feature-gates=MountPropagation=true --cpus=1 --memory=4096
   - make e2e
 
 after_success:

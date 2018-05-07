@@ -27,10 +27,10 @@ spec:
         volumeMounts:
         - name: device
           mountPath: /host/dev
-          mountPropagation: Bidirectional
+          # mountPropagation: Bidirectional
         - name: mount
           mountPath: /host/mnt
-          mountPropagation: Bidirectional
+          # mountPropagation: Bidirectional
       volumes:
       - name: device
         hostPath:

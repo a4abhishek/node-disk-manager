@@ -20,7 +20,7 @@ def setup():
         print 'Running minikube command'###########
         subprocess.check_call(["sudo", "minikube", "start", "--vm-driver=none",
                                "--feature-gates=MountPropagation=true",
-                               "--cpus=1", "--memory=1024", "--v=3"])
+                               "--cpus=1", "--memory=1024", "--v=3", "--alsologtostderr"])
         print 'Run minikube command'###########
     except subprocess.CalledProcessError as err:
         print 'Subprocess error occured while starting minikube:',\
