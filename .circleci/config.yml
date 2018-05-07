@@ -168,6 +168,10 @@ jobs:
             cp -s /bin/kmod /sbin/modprobe
             cp -r external_bin/etc/modprobe.d /etc/
             cp -r external_bin/lib/modprobe.d /lib/
+            # minikube tries to write here
+            chmod +w /proc/sys/net/ipv4/conf/all/route_localnet
+            chmod +w /proc/sys/net/ipv4/vs/conntrack
+            chmod +w /proc/sys/net/ipv4/ip_forward
 
       # Starting minikube
       - run:
@@ -175,7 +179,7 @@ jobs:
           command: |
             echo $KUBECONFIG
             unset KUBECONFIG
-            minikube start --vm-driver=none --bootstrapper=localkube --feature-gates=MountPropagation=true
+            minikube start docker-env --vm-driver=none --bootstrapper=localkube --feature-gates=MountPropagation=true
             minikube update-context
             minikube status
             kubectl config view
