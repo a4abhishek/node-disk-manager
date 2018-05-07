@@ -169,9 +169,9 @@ jobs:
             cp -r external_bin/etc/modprobe.d /etc/
             cp -r external_bin/lib/modprobe.d /lib/
             # minikube tries to write here
-            chmod +w /proc/sys/net/ipv4/conf/all/route_localnet
-            chmod +w /proc/sys/net/ipv4/vs/conntrack
-            chmod +w /proc/sys/net/ipv4/ip_forward
+            # chmod +w /proc/sys/net/ipv4/conf/all/route_localnet
+            # chmod +w /proc/sys/net/ipv4/vs/conntrack
+            # chmod +w /proc/sys/net/ipv4/ip_forward
 
       # Starting minikube
       - run:
