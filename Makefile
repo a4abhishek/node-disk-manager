@@ -4,6 +4,8 @@ build: clean vet fmt ndm version docker
 
 PACKAGES = $(shell go list ./... | grep -v '/vendor/')
 
+NODE_DISK_MANAGER?=ndm
+
 # Determine the arch/os
 XC_OS?= $(shell go env GOOS)
 XC_ARCH?= $(shell go env GOARCH)
@@ -60,8 +62,12 @@ header:
 	@echo "----------------------------"
 	@echo
 
+integration-test:
+	go test -v github.com/openebs/node-disk-manager/integration_test -run ^TestNDM$
+
 ndm:
 	@echo '--> Building binary...'
+	@pwd
 	@CTLNAME=${NODE_DISK_MANAGER} sh -c "'$(PWD)/hack/build.sh'"
 	@echo '--> Built binary.'
 	@echo
