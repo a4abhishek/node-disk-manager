@@ -41,7 +41,7 @@ var PodWaitStates = []string{"ContainerCreating", "Pending"}
 var PodGoodStates = []string{"Running"}
 
 // PodBadStates is an array of the states of the Pod which are considered to be bad
-var PodBadStates = []string{"CrashLoopBackOff", "ImagePullBackOff", "RunContainerError"}
+var PodBadStates = []string{"CrashLoopBackOff", "ImagePullBackOff", "RunContainerError", "ContainerCannotRun"}
 
 // IsNSinGoodPhase checks if supplied namespace is in good phase or not
 // by matching phase of supplied namespace with pre-identified Good phase list (NsGoodPhases)

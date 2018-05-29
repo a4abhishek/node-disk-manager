@@ -47,7 +47,7 @@ var _ = Describe("Integration Test", func() {
 	})
 
 	When("We check Disk", func() {
-		Specify("`ndm device list` output inside the node-disk-manager pod"+
+		Specify("`ndm device list` output inside the node-disk-manager pod "+
 			"and `lsblk -bro name,size,type,mountpoint` output on the host should match", func() {
 			matched, err := ndmutil.MatchDisksOutsideAndInside()
 
