@@ -3,6 +3,8 @@ package k8sutil
 import (
 	"time"
 
+	k8sutil "CITF/k8s_util"
+
 	core_v1 "k8s.io/api/core/v1"
 )
 
@@ -17,7 +19,7 @@ func GetNdmPod() (core_v1.Pod, error) {
 	// Assumption: node-disk-manager pods runs under default namespace (k8s.io/api/core/v1.NamespaceDefault).
 	// Assumption: Pod name starts with string "node-disk-manager".
 	// Assumption: There is only one node-disk-manager pod (which is true for minikube).
-	return GetPod(NdmNamespace, "node-disk-manager")
+	return k8sutil.GetPod(NdmNamespace, "node-disk-manager")
 }
 
 // GetContainerStateInNdmPod returns the state of the first container of the supplied index.
@@ -30,5 +32,5 @@ func GetContainerStateInNdmPod(waitTimeUnit time.Duration) (core_v1.ContainerSta
 		return core_v1.ContainerState{}, err
 	}
 	// Assumption: There is only one container in the node-disk-manager pod.
-	return GetContainerStateInPod(ndmPod, 0, waitTimeUnit)
+	return k8sutil.GetContainerStateInPod(ndmPod, 0, waitTimeUnit)
 }

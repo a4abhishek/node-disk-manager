@@ -11,14 +11,17 @@ import (
 	"strings"
 	"time"
 
-	"github.com/openebs/node-disk-manager/integration_test/minikube_adm"
+	"CITF/minikube_adm"
 
-	"github.com/openebs/node-disk-manager/integration_test/k8s_util"
+	k8sutil "CITF/k8s_util"
+
+	k8s_util "github.com/a4abhishek/node-disk-manager/integration_test/k8s_util"
 
 	"io/ioutil"
 
+	. "CITF/common"
+
 	"github.com/golang/glog"
-	. "github.com/openebs/node-disk-manager/integration_test/common"
 	core_v1 "k8s.io/api/core/v1"
 	v1beta1 "k8s.io/api/extensions/v1beta1"
 )
@@ -48,7 +51,7 @@ var (
 // GetNDMDir returns the path to the node-disk-manager repository
 func GetNDMDir() string {
 	// Assumptions: GOPATH has only one path (no colons)
-	return path.Join(os.Getenv("GOPATH"), "src/github.com/openebs/node-disk-manager/")
+	return path.Join(os.Getenv("GOPATH"), "src/github.com/a4abhishek/node-disk-manager/")
 }
 
 // GetNDMBinDir returns the path of bin folder of node-disk-manager repository
@@ -145,7 +148,7 @@ func ValidateNdmLog(log string) bool {
 // return the validation status and error occured during process
 func GetNDMLogAndValidate() (bool, error) {
 	// Getting the log
-	ndmPod, err := k8sutil.GetNdmPod()
+	ndmPod, err := k8s_util.GetNdmPod()
 	if err != nil {
 		return false, err
 	}
@@ -284,7 +287,7 @@ func GetLsblkOutputOnHost() (map[string]map[string]string, error) {
 // GetNDMDeviceListOutputFromThePod runs `ndm device list` in the node-disk-manager pod
 // and parses the output in a map then returns the map
 func GetNDMDeviceListOutputFromThePod() (map[string]map[string]string, error) {
-	ndmPod, err := k8sutil.GetNdmPod()
+	ndmPod, err := k8s_util.GetNdmPod()
 	if err != nil {
 		return nil, err
 	}
@@ -461,14 +464,14 @@ func WaitTillNDMisUp() {
 	ndmPod := core_v1.Pod{}
 	podState := core_v1.ContainerState{}
 	for i := 0; i < maxTry; i++ { // Since we have many continue statements so we have to increment here only
-		ndmPod, err = k8sutil.GetNdmPod()
+		ndmPod, err = k8s_util.GetNdmPod()
 		if err != nil {
 			fmt.Printf("Try - %d: Error getting NDM pod. Error: %+v\n", i, err)
 			time.Sleep(WaitTimeUnit)
 			continue
 		}
 
-		podState, err = k8sutil.GetContainerStateInNdmPod(1 * time.Minute)
+		podState, err = k8s_util.GetContainerStateInNdmPod(1 * time.Minute)
 		if err != nil {
 			fmt.Printf("Try - %d: Error getting container state of NDM pod. Error: %+v\n", i, err)
 			time.Sleep(WaitTimeUnit)

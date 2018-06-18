@@ -3,10 +3,11 @@ package integrationtest
 import (
 	"testing"
 
+	"CITF/minikube_adm"
+
+	"github.com/a4abhishek/node-disk-manager/integration_test/ndm_util"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/openebs/node-disk-manager/integration_test/minikube_adm"
-	"github.com/openebs/node-disk-manager/integration_test/ndm_util"
 )
 
 func TestIntegrationNDM(t *testing.T) {
