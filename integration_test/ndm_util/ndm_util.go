@@ -11,14 +11,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/openebs/node-disk-manager/integration_test/minikube_adm"
-
-	"github.com/openebs/node-disk-manager/integration_test/k8s_util"
-
 	"io/ioutil"
 
+	"github.com/a4abhishek/CITF"
 	"github.com/golang/glog"
-	. "github.com/openebs/node-disk-manager/integration_test/common"
+	"github.com/openebs/node-disk-manager/integration_test/k8s_util"
 	core_v1 "k8s.io/api/core/v1"
 	v1beta1 "k8s.io/api/extensions/v1beta1"
 )
@@ -43,6 +40,8 @@ var (
 	// WaitTimeUnit is the unit time duration that is mostly used by the functions in this package
 	// to wait for after a try (Not always applicable)
 	WaitTimeUnit time.Duration = 1 * time.Second
+
+	citfInstance = citf.NewCITF("")
 )
 
 // GetNDMDir returns the path to the node-disk-manager repository
@@ -510,18 +509,18 @@ func WaitTillNDMisUp() {
 
 // Clean is intended to clean the residue of the testing.
 // It should be run at the very end of the test.
-// CAUTION: it calls `minikubeadm.ClearContainers`
+// CAUTION: it calls `citfInstance.Environment.ClearContainers`
 // which removes all Docker Containers in your machine.
 func Clean() {
 	// Check minikube status and delete if minikube is running
 	fmt.Println("Checking minikube status...")
-	minikubeStatus, err := minikubeadm.CheckStatus()
+	minikubeStatus, err := citfInstance.Environment.Status()
 	if err != nil {
 		fmt.Printf("Error occured while checking status of minikube. Error: %+v\n", err)
 	}
 	if state, ok := minikubeStatus["minikube"]; ok && (state == "Running" || state == "Stopped") {
 		fmt.Println("Deleting minikube...")
-		err = minikubeadm.Teardown()
+		err = citfInstance.Environment.Teardown()
 		if err != nil {
 			fmt.Printf("Error while deleting minikube. Error: %+v\n", err)
 		}
@@ -531,7 +530,7 @@ func Clean() {
 
 	// Remove all docker containers
 	fmt.Println("Removing docker containers...")
-	err = minikubeadm.ClearContainers()
+	err = citfInstance.Docker.Teardown()
 	if err != nil {
 		fmt.Printf("Error occured when deleting containers. Error: %+v\n", err)
 	}

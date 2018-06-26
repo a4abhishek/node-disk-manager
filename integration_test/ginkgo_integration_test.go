@@ -3,9 +3,9 @@ package integrationtest
 import (
 	"testing"
 
+	"github.com/a4abhishek/CITF"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/openebs/node-disk-manager/integration_test/minikube_adm"
 	"github.com/openebs/node-disk-manager/integration_test/ndm_util"
 )
 
@@ -15,8 +15,9 @@ func TestIntegrationNDM(t *testing.T) {
 }
 
 var _ = BeforeSuite(func() {
+	citfInstance := citf.NewCITF("")
 	// It starts minikube if it is not Running
-	minikubeadm.Setup()
+	citfInstance.Environment.Setup()
 
 	// It waits till namespace is ready
 	ndmutil.WaitTillDefaultNSisReady()
@@ -32,7 +33,7 @@ var _ = AfterSuite(func() {
 	// It Delete minikube if it is running
 	// It removes residue containers
 	// It removes remaining residue files
-	ndmutil.Clean()
+	// ndmutil.Clean()
 })
 
 var _ = Describe("Integration Test", func() {
