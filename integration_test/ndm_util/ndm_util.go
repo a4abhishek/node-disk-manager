@@ -13,8 +13,10 @@ import (
 
 	"io/ioutil"
 
-	"github.com/a4abhishek/CITF"
 	"github.com/golang/glog"
+	"github.com/openebs/CITF"
+	strutil "github.com/openebs/CITF/utils/string"
+	sysutil "github.com/openebs/CITF/utils/system"
 	"github.com/openebs/node-disk-manager/integration_test/k8s_util"
 	core_v1 "k8s.io/api/core/v1"
 	v1beta1 "k8s.io/api/extensions/v1beta1"
@@ -101,7 +103,7 @@ func GetNDMTestConfigurationFilePath() string {
 // GetDockerImageName returns the docker image name of node-disk-manager
 // that will build when we build the project
 func GetDockerImageName() string {
-	return "openebs/node-disk-manager-" + GetenvFallback("XC_ARCH", runtime.GOARCH)
+	return "openebs/node-disk-manager-" + sysutil.GetenvFallback("XC_ARCH", runtime.GOARCH)
 }
 
 // GetDockerImageTag returns the docker tag of the node-disk-manager docker image
@@ -111,7 +113,7 @@ func GetDockerImageTag() string {
 		return strings.TrimSpace(tag)
 	}
 
-	tag, err := ExecCommand("git describe --tags --always")
+	tag, err := sysutil.ExecCommand("git describe --tags --always")
 	if err != nil {
 		fmt.Printf("Error while getting docker tag name. Error: %+v\n", err)
 		return ""
@@ -149,7 +151,7 @@ func GetNDMLogAndValidate() (bool, error) {
 		return false, err
 	}
 
-	log, err := k8sutil.GetLog(ndmPod.Name, ndmPod.Namespace)
+	log, err := citfInstance.K8S.GetLog(ndmPod.Name, ndmPod.Namespace)
 	if err != nil {
 		return false, err
 	}
@@ -168,7 +170,7 @@ func YAMLPrepare() (v1beta1.DaemonSet, error) {
 	}
 
 	// Get the DaemonSet Struct
-	ds, err := k8sutil.GetDaemonsetStructFromYamlBytes(yamlBytes)
+	ds, err := citfInstance.K8S.GetDaemonsetStructFromYamlBytes(yamlBytes)
 	if err != nil {
 		return v1beta1.DaemonSet{}, err
 	}
@@ -206,7 +208,7 @@ func YAMLPrepareAndWriteInTempPath() error {
 		return err
 	}
 
-	yamlBytes, err := ConvertJSONtoYAML(jsonBytes)
+	yamlBytes, err := strutil.ConvertJSONtoYAML(jsonBytes)
 	if err != nil {
 		return err
 	}
@@ -221,11 +223,11 @@ func PrepareAndApplyYAML() error {
 		return err
 	}
 
-	fmt.Println(PrettyString(dsManifest))
+	fmt.Println(strutil.PrettyString(dsManifest))
 
-	dsManifest, err = k8sutil.ApplyDSFromManifestStruct(dsManifest)
+	dsManifest, err = citfInstance.K8S.ApplyDSFromManifestStruct(dsManifest)
 	fmt.Println("After applying...")
-	fmt.Println(PrettyString(dsManifest))
+	fmt.Println(strutil.PrettyString(dsManifest))
 	return err
 }
 
@@ -238,15 +240,15 @@ func ReplaceImageInYAMLAndApply() error {
 	}
 
 	yamlString := string(yamlBytes)
-	yamlString = strings.Replace(yamlString, "amd64:ci", GetenvFallback("XC_ARCH", runtime.GOARCH)+":"+GetDockerImageTag(), 1)
+	yamlString = strings.Replace(yamlString, "amd64:ci", sysutil.GetenvFallback("XC_ARCH", runtime.GOARCH)+":"+GetDockerImageTag(), 1)
 	yamlString = strings.Replace(yamlString, "imagePullPolicy: Always", "imagePullPolicy: IfNotPresent", 1)
 
 	fmt.Println("Image name:", GetDockerImageName()+":"+GetDockerImageTag())
-	if Debug {
+	if citfInstance.DebugEnabled {
 		fmt.Println("String to apply:", yamlString)
 	}
 
-	return RunCommandWithGivenStdin("kubectl apply -f -", yamlString)
+	return sysutil.RunCommandWithGivenStdin("kubectl apply -f -", yamlString)
 }
 
 // GetLsblkOutputOnHost runs `lsblk -bro name,size,type,mountpoint` on the host
@@ -254,7 +256,7 @@ func ReplaceImageInYAMLAndApply() error {
 func GetLsblkOutputOnHost() (map[string]map[string]string, error) {
 	// NOTE: lsblk in Ubuntu-Trusty does not have column serial
 	// lsblkOutputStr, err := ExecCommand("lsblk -brdno name,size,model,serial")
-	lsblkOutputStr, err := ExecCommand("lsblk -brdno name,size,model")
+	lsblkOutputStr, err := sysutil.ExecCommand("lsblk -brdno name,size,model")
 	if err != nil {
 		return nil, err
 	}
@@ -288,7 +290,7 @@ func GetNDMDeviceListOutputFromThePod() (map[string]map[string]string, error) {
 		return nil, err
 	}
 
-	ndmOutputStr, err := k8sutil.ExecToPod("ndm device list", ndmPod.Name, ndmPod.Namespace)
+	ndmOutputStr, err := citfInstance.K8S.ExecToPod("ndm device list", ndmPod.Name, ndmPod.Namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -328,13 +330,13 @@ func MatchDisksOutsideAndInside() (bool, error) {
 		return false, err
 	}
 
-	if Debug {
+	if citfInstance.DebugEnabled {
 		fmt.Printf("`lsblk` output: %q\n", lsblkOutput)
 	}
 
 	ndmOutput, err := GetNDMDeviceListOutputFromThePod()
 
-	if Debug {
+	if citfInstance.DebugEnabled {
 		fmt.Printf("`ndm device list` output: %q\n", ndmOutput)
 	}
 
@@ -368,10 +370,10 @@ func MatchDisksOutsideAndInside() (bool, error) {
 				if !(strings.HasPrefix(devDetailsNdm[k], v)) &&
 					// If normal strings does not matches then try to match it by
 					// resolving hex codes and trimming again
-					!(strings.HasPrefix(devDetailsNdm[k], strings.TrimSpace(ReplaceHexCodesWithValue(v)))) &&
+					!(strings.HasPrefix(devDetailsNdm[k], strings.TrimSpace(strutil.ReplaceHexCodesWithValue(v)))) &&
 					// If even that fails then it tries to replace space with underscore
 					// as ndm sometimes gets values this way
-					!(strings.HasPrefix(devDetailsNdm[k], strings.Replace(strings.TrimSpace(ReplaceHexCodesWithValue(v)), " ", "_", -1))) {
+					!(strings.HasPrefix(devDetailsNdm[k], strings.Replace(strings.TrimSpace(strutil.ReplaceHexCodesWithValue(v)), " ", "_", -1))) {
 					return false, nil
 				}
 			}
@@ -405,7 +407,7 @@ func WaitTillDefaultNSisReady() {
 
 	ndmNS := core_v1.Namespace{}
 	for i := 0; i < maxTry; i++ {
-		namespaces, err := k8sutil.GetAllNamespacesCoreV1NamespaceArray()
+		namespaces, err := citfInstance.K8S.GetAllNamespacesCoreV1NamespaceArray()
 		if err == nil {
 			for _, namespace := range namespaces {
 				if namespace.Name == GetNDMNamespace() {
@@ -426,7 +428,7 @@ func WaitTillDefaultNSisReady() {
 			continue
 		}
 
-		if IsNSinGoodPhase(ndmNS) {
+		if citfInstance.K8S.IsNSinGoodPhase(ndmNS) {
 			break
 		}
 		fmt.Printf("Try - %d: Waiting as Namespace %q is in %q phase\n", i, ndmNS.Name, ndmNS.Status.Phase)
@@ -435,7 +437,7 @@ func WaitTillDefaultNSisReady() {
 	// Final Check
 	if reflect.DeepEqual(ndmNS, core_v1.Namespace{}) {
 		glog.Fatalf("Namespace %q didn't came up in %v", GetNDMNamespace(), time.Duration(MaxTry)*WaitTimeUnit)
-	} else if !IsNSinGoodPhase(ndmNS) {
+	} else if !citfInstance.K8S.IsNSinGoodPhase(ndmNS) {
 		glog.Fatalf("Namespace %q is still in bad phase: %q after %v", GetNDMNamespace(), ndmNS.Status.Phase, time.Duration(MaxTry)*WaitTimeUnit)
 	}
 	fmt.Printf("Namespace %q is ready\n", ndmNS.Name)
@@ -479,11 +481,11 @@ func WaitTillNDMisUp() {
 		}
 
 		if podState.Waiting != nil {
-			if IsPodStateWait(podState.Waiting.Reason) {
+			if citfInstance.K8S.IsPodStateWait(podState.Waiting.Reason) {
 				fmt.Printf("Waiting as pod-state: %q. Details: %+v\n", podState.Waiting.Reason, *podState.Waiting)
 				time.Sleep(WaitTimeUnit)
 				continue
-			} else if !IsPodStateGood(podState.Waiting.Reason) {
+			} else if !citfInstance.K8S.IsPodStateGood(podState.Waiting.Reason) {
 				glog.Fatalf("Pod is in bad state: %q. Details: %+v", podState.Waiting.Reason, *podState.Waiting)
 			}
 		}
@@ -491,7 +493,7 @@ func WaitTillNDMisUp() {
 		if podState.Running == nil {
 			// At this point all states are None,
 			// so just showing phase is enough
-			fmt.Printf("Waiting as pod-phase: %q\n", k8sutil.GetPodPhase(ndmPod))
+			fmt.Printf("Waiting as pod-phase: %q\n", citfInstance.K8S.GetPodPhase(ndmPod))
 			time.Sleep(WaitTimeUnit)
 		} else {
 			break

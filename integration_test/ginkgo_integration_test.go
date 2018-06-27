@@ -3,9 +3,9 @@ package integrationtest
 import (
 	"testing"
 
-	"github.com/a4abhishek/CITF"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"github.com/openebs/CITF"
 	"github.com/openebs/node-disk-manager/integration_test/ndm_util"
 )
 

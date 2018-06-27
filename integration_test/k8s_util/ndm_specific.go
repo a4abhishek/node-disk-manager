@@ -3,7 +3,7 @@ package k8sutil
 import (
 	"time"
 
-	"github.com/a4abhishek/CITF"
+	"github.com/openebs/CITF"
 	core_v1 "k8s.io/api/core/v1"
 )
 
@@ -33,5 +33,5 @@ func GetContainerStateInNdmPod(waitTimeUnit time.Duration) (core_v1.ContainerSta
 		return core_v1.ContainerState{}, err
 	}
 	// Assumption: There is only one container in the node-disk-manager pod.
-	return GetContainerStateInPod(ndmPod, 0, waitTimeUnit)
+	return citfInstance.K8S.GetContainerStateInPod(ndmPod, 0, waitTimeUnit)
 }

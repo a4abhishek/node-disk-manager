@@ -81,7 +81,7 @@ type StoragePoolList struct {
 // Disk describes disk resource.
 type Disk struct {
 	metav1.TypeMeta   `json:",inline"`
-	metav1.ObjectMeta `json:"metadata, omitempty"`
+	metav1.ObjectMeta `json:"metadata,omitempty"`
 
 	Spec   DiskSpec   `json:"spec"`
 	Status DiskStatus `json:"status"`
