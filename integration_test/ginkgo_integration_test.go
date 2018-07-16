@@ -2,6 +2,7 @@ package integrationtest
 
 import (
 	"testing"
+	"time"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -15,7 +16,9 @@ func TestIntegrationNDM(t *testing.T) {
 }
 
 var _ = BeforeSuite(func() {
-	citfInstance := citf.NewCITF("")
+	citfInstance, err := citf.NewCITF("")
+	Expect(err).NotTo(HaveOccurred())
+
 	// It starts minikube if it is not Running
 	citfInstance.Environment.Setup()
 
@@ -25,8 +28,9 @@ var _ = BeforeSuite(func() {
 	// It prepares configuration and Applies the same
 	ndmutil.ReplaceImageInYAMLAndApply()
 
-	// It waits till node-disk-manager is ready
-	ndmutil.WaitTillNDMisUp()
+	// It waits till node-disk-manager is ready or timeout reached
+	err = ndmutil.WaitTillNDMisUpOrTimeout(5 * time.Minute)
+	Expect(err).NotTo(HaveOccurred())
 })
 
 var _ = AfterSuite(func() {

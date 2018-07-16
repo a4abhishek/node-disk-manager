@@ -13,6 +13,10 @@ import (
 
 	"io/ioutil"
 
+	"context"
+	"errors"
+	"sync"
+
 	"github.com/golang/glog"
 	"github.com/openebs/CITF"
 	strutil "github.com/openebs/CITF/utils/string"
@@ -43,8 +47,16 @@ var (
 	// to wait for after a try (Not always applicable)
 	WaitTimeUnit time.Duration = 1 * time.Second
 
-	citfInstance = citf.NewCITF("")
+	citfInstance citf.CITF
 )
+
+func init() {
+	var err error
+	citfInstance, err = citf.NewCITF("")
+	if err != nil {
+		glog.Fatal(err)
+	}
+}
 
 // GetNDMDir returns the path to the node-disk-manager repository
 func GetNDMDir() string {
@@ -142,21 +154,47 @@ func ValidateNdmLog(log string) bool {
 	return false
 }
 
-// GetNDMLogAndValidate extracts log of node-disk-manager and then validate
+// GetNDMLogAndValidateFor extracts log of supplied pod of node-disk-manager and then validate
 // return the validation status and error occured during process
-func GetNDMLogAndValidate() (bool, error) {
-	// Getting the log
-	ndmPod, err := k8sutil.GetNdmPod()
-	if err != nil {
-		return false, err
+func GetNDMLogAndValidateFor(ndmPod *core_v1.Pod) (bool, error) {
+	// log if debug is enabled
+	if citfInstance.DebugEnabled {
+		fmt.Printf("checking logs for pod %q in namespace %q\n", ndmPod.Name, ndmPod.Namespace)
 	}
 
+	// Getting the log
 	log, err := citfInstance.K8S.GetLog(ndmPod.Name, ndmPod.Namespace)
 	if err != nil {
 		return false, err
 	}
 
-	return ValidateNdmLog(log), nil
+	// Validating the log
+	if !ValidateNdmLog(log) {
+		return false, nil
+	}
+
+	return true, nil
+}
+
+// GetNDMLogAndValidate extracts log of node-disk-manager and then validate
+// return the validation status and error occured during process
+func GetNDMLogAndValidate() (bool, error) {
+	// Getting the log
+	ndmPods, err := k8sutil.GetNdmPods()
+	if err != nil {
+		return false, err
+	}
+
+	// check log of every ndm pod, if any one fails return false
+	for _, ndmPod := range ndmPods {
+		if validated, err := GetNDMLogAndValidateFor(&ndmPod); err != nil {
+			return false, err
+		} else if !validated {
+			return false, nil
+		}
+	}
+
+	return true, nil
 }
 
 // YAMLPrepare reads and parse the configuration file into v1beta1.DaemonSet and changes some fields
@@ -284,13 +322,9 @@ func GetLsblkOutputOnHost() (map[string]map[string]string, error) {
 
 // GetNDMDeviceListOutputFromThePod runs `ndm device list` in the node-disk-manager pod
 // and parses the output in a map then returns the map
-func GetNDMDeviceListOutputFromThePod() (map[string]map[string]string, error) {
-	ndmPod, err := k8sutil.GetNdmPod()
-	if err != nil {
-		return nil, err
-	}
-
-	ndmOutputStr, err := citfInstance.K8S.ExecToPod("ndm device list", ndmPod.Name, ndmPod.Namespace)
+func GetNDMDeviceListOutputFromThePod(ndmPod *core_v1.Pod) (map[string]map[string]string, error) {
+	// Assumption: either only one container is there or if kubectl binary is there then default container gives correct result
+	ndmOutputStr, err := citfInstance.K8S.ExecToPod("ndm device list", "", ndmPod.Name, ndmPod.Namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -322,9 +356,9 @@ func GetNDMDeviceListOutputFromThePod() (map[string]map[string]string, error) {
 	return ndmOutput, nil
 }
 
-// MatchDisksOutsideAndInside takes output of `lsblk -brdno name,size,model` on the host
-// and output of `ndm device list` inside the pod. Then it matches the two
-func MatchDisksOutsideAndInside() (bool, error) {
+// MatchDisksOutsideAndInsideFor takes output of `lsblk -brdno name,size,model` on the host
+// and output of `ndm device list` inside the pod supplied. Then it matches the two
+func MatchDisksOutsideAndInsideFor(ndmPod *core_v1.Pod) (bool, error) {
 	lsblkOutput, err := GetLsblkOutputOnHost()
 	if err != nil {
 		return false, err
@@ -334,7 +368,10 @@ func MatchDisksOutsideAndInside() (bool, error) {
 		fmt.Printf("`lsblk` output: %q\n", lsblkOutput)
 	}
 
-	ndmOutput, err := GetNDMDeviceListOutputFromThePod()
+	ndmOutput, err := GetNDMDeviceListOutputFromThePod(ndmPod)
+	if err != nil {
+		return false, err
+	}
 
 	if citfInstance.DebugEnabled {
 		fmt.Printf("`ndm device list` output: %q\n", ndmOutput)
@@ -368,13 +405,23 @@ func MatchDisksOutsideAndInside() (bool, error) {
 				// output of same attribute in ndm
 				// lsblk truncates the Output so we need to check for the prefix
 				if !(strings.HasPrefix(devDetailsNdm[k], v)) &&
+					// now check if after replacing space with underscore matches
+					!(strings.HasPrefix(devDetailsNdm[k], strings.Replace(v, " ", "_", -1))) {
 					// If normal strings does not matches then try to match it by
 					// resolving hex codes and trimming again
-					!(strings.HasPrefix(devDetailsNdm[k], strings.TrimSpace(strutil.ReplaceHexCodesWithValue(v)))) &&
-					// If even that fails then it tries to replace space with underscore
-					// as ndm sometimes gets values this way
-					!(strings.HasPrefix(devDetailsNdm[k], strings.Replace(strings.TrimSpace(strutil.ReplaceHexCodesWithValue(v)), " ", "_", -1))) {
-					return false, nil
+					var hexReplacedValue string
+					hexReplacedValue, err = strutil.ReplaceHexCodesWithValue(v)
+					// if error occurred in decoding
+					if err != nil {
+						return false, err
+					}
+					hexReplacedValue = strings.TrimSpace(hexReplacedValue)
+					if !(strings.HasPrefix(devDetailsNdm[k], hexReplacedValue)) &&
+						// If even that fails then it tries to replace space with underscore
+						// as ndm sometimes gets values this way
+						!(strings.HasPrefix(devDetailsNdm[k], strings.Replace(hexReplacedValue, " ", "_", -1))) {
+						return false, nil
+					}
 				}
 			}
 		case diskInfo.diskPresent && diskInfo.diskStatus != "Active":
@@ -386,6 +433,23 @@ func MatchDisksOutsideAndInside() (bool, error) {
 		}
 	}
 
+	return true, nil
+}
+
+// MatchDisksOutsideAndInside takes output of `lsblk -brdno name,size,model` on the host
+// and output of `ndm device list` inside all the ndm pod. Then it matches the two
+func MatchDisksOutsideAndInside() (bool, error) {
+	ndmPods, err := k8sutil.GetNdmPods()
+	if err != nil {
+		return false, err
+	}
+	for _, ndmPod := range ndmPods {
+		if matched, err := MatchDisksOutsideAndInsideFor(&ndmPod); err != nil {
+			return false, err
+		} else if !matched {
+			return false, nil
+		}
+	}
 	return true, nil
 }
 
@@ -443,70 +507,108 @@ func WaitTillDefaultNSisReady() {
 	fmt.Printf("Namespace %q is ready\n", ndmNS.Name)
 }
 
-// WaitTillNDMisUp busy waits until the pod is up or number of try exceeds MaxTry.
+// WaitTillNDMisUpOrTimeout busy waits until all ndm pods are up or timeout hits.
 // Each try is make after waiting for WaitTimeUnit number of seconds.
-func WaitTillNDMisUp() {
-	// Ensuring minimum value for the arguments
+func WaitTillNDMisUpOrTimeout(timeout time.Duration) (err error) {
+	startTime := time.Now()
 
-	// Making sure that it tries at least once to apply the YAML
-	maxTry := MaxTry
-	if maxTry < 1 {
-		maxTry = 1
-	}
-	waitTimeUnit := WaitTimeUnit
-	if waitTimeUnit < 0*time.Second {
-		waitTimeUnit = 0 * time.Second
+	if citfInstance.DebugEnabled {
+		fmt.Println("Waiting for NDM pods to be up...")
 	}
 
-	var err error
-	ndmPod := core_v1.Pod{}
-	podState := core_v1.ContainerState{}
-	for i := 0; i < maxTry; i++ { // Since we have many continue statements so we have to increment here only
-		ndmPod, err = k8sutil.GetNdmPod()
-		if err != nil {
-			fmt.Printf("Try - %d: Error getting NDM pod. Error: %+v\n", i, err)
-			time.Sleep(WaitTimeUnit)
-			continue
-		}
-
-		podState, err = k8sutil.GetContainerStateInNdmPod(1 * time.Minute)
-		if err != nil {
-			fmt.Printf("Try - %d: Error getting container state of NDM pod. Error: %+v\n", i, err)
-			time.Sleep(WaitTimeUnit)
-			continue
-		}
-
-		if podState.Terminated != nil {
-			glog.Fatalf("Pod terminated unexpectedly, Reason: %q. Details: %+v", podState.Terminated.Reason, podState.Terminated)
-		}
-
-		if podState.Waiting != nil {
-			if citfInstance.K8S.IsPodStateWait(podState.Waiting.Reason) {
-				fmt.Printf("Waiting as pod-state: %q. Details: %+v\n", podState.Waiting.Reason, *podState.Waiting)
-				time.Sleep(WaitTimeUnit)
+	var ndmPods []core_v1.Pod
+	timeoutChan := time.After(timeout)
+	i := 0 // Remove me
+GetNdmPods:
+	for {
+		fmt.Println("WaitTillNDMisUpOrTimeout. Try -", i) // Remove me
+		select {
+		case <-timeoutChan:
+			// return the last error
+			fmt.Println("timeout for checking NDM Pods to be up") // Remove me
+			return
+		default:
+			fmt.Println("going to GetNdmPods") // Remove me
+			ndmPods, err = k8sutil.GetNdmPods()
+			fmt.Println("returned from GetNdmPods") // Remove me
+			if err != nil {
+				// form error string
+				errString := fmt.Sprintf("error occurred in getting ndm pods: %+v", err)
+				// update err
+				err = errors.New(errString)
+				// print error string
+				fmt.Println(errString)
+				// sleep and continue
+				time.Sleep(time.Second)
 				continue
-			} else if !citfInstance.K8S.IsPodStateGood(podState.Waiting.Reason) {
-				glog.Fatalf("Pod is in bad state: %q. Details: %+v", podState.Waiting.Reason, *podState.Waiting)
 			}
-		}
 
-		if podState.Running == nil {
-			// At this point all states are None,
-			// so just showing phase is enough
-			fmt.Printf("Waiting as pod-phase: %q\n", citfInstance.K8S.GetPodPhase(ndmPod))
-			time.Sleep(WaitTimeUnit)
-		} else {
-			break
+			var nodes []core_v1.Node
+			nodes, err = citfInstance.K8S.GetNodes()
+			if err != nil {
+				err = fmt.Errorf("failed to get the number of nodes: %+v", err)
+			}
+
+			// if not as many ndm-pods are there as there are nodes
+			// Assumption: node-disk-manager is a daemonset
+			if len(ndmPods) != len(nodes) {
+				err = fmt.Errorf("%d node-disk-manager pods found for %d node(s)", len(ndmPods), len(nodes))
+				continue
+			}
+			// if err is nil break the loop
+			fmt.Println("calling break")
+			break GetNdmPods
 		}
 	}
 
-	// Final Check
-	if reflect.DeepEqual(ndmPod, core_v1.Pod{}) {
-		glog.Fatalf("NDM-Pod didn't came up in %v", time.Duration(MaxTry)*WaitTimeUnit)
-	} else if podState.Running == nil {
-		glog.Fatalf("Pod %q is still not in \"Running\" state after %v", ndmPod.Name, time.Duration(MaxTry)*WaitTimeUnit)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	ndmErrors := make([]error, len(ndmPods))
+	var wg sync.WaitGroup
+	for i, ndmPod := range ndmPods {
+		// create a go-routine for every ndm-pod so that we can return as soon as we hit any error in any of them
+		wg.Add(1)
+		go func(ndmPod core_v1.Pod, err *error) {
+			defer wg.Done()
+
+			// create a go-routine to do the work
+			done := make(chan bool)
+			quit := make(chan bool)
+			go func() {
+				*err = citfInstance.K8S.BlockUntilPodIsUp(&ndmPod, quit)
+				if *err != nil {
+					*err = fmt.Errorf("error while waiting for pod %q: %+v", ndmPod.Name, err)
+					cancel()
+				} else {
+					fmt.Printf("pod %q is up.\n", ndmPod.Name)
+				}
+				done <- true
+			}()
+
+			// exit in case of either timeout or context cancelled or work is done
+			select {
+			// I want to separate these two cases so I am using time.After instead of using context.WithTimeout for context.WithCancel
+			case <-time.After(timeout - time.Since(startTime)):
+				*err = fmt.Errorf("timeout hit while waiting for pod %q to be up", ndmPod.Name)
+				quit <- true
+			case <-ctx.Done():
+				// writing error is not required because whoever has cancelled the context would have written the error
+				quit <- true
+			case <-done:
+			}
+		}(ndmPod, &ndmErrors[i]) // Sending a copy of `ndmPod`` as it will be used inside this goroutine even when original one changes bacause of loop
 	}
-	fmt.Printf("Pod %q is up.\n", ndmPod.Name)
+	wg.Wait()
+
+	// return first non-nil error if any
+	for _, err := range ndmErrors {
+		if err != nil {
+			return err
+		}
+	}
+	// otherwise return nil
+	return nil
 }
 
 // Clean is intended to clean the residue of the testing.
